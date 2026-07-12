@@ -27,6 +27,7 @@ function readJson(file, fallback) {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
   } catch (error) {
+    console.log("ERROR LEYENDO JSON:", file, error.message);
     return fallback;
   }
 }
@@ -39,14 +40,37 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(email || "").trim().toLowerCase());
 }
 
+function normalizeAppPassword(value) {
+  return String(value || "").replace(/\s+/g, "").trim();
+}
+
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(String(password)).digest("hex");
+}
+
+function printSmtpStatus() {
+  console.log("========== SMTP CONFIG CHECK ==========");
+  console.log("BASE_URL:", BASE_URL);
+  console.log("SMTP_HOST:", process.env.SMTP_HOST || "NO DEFINIDO");
+  console.log("SMTP_PORT:", process.env.SMTP_PORT || "NO DEFINIDO");
+  console.log("SMTP_SECURE:", process.env.SMTP_SECURE || "NO DEFINIDO");
+  console.log("SMTP_USER:", process.env.SMTP_USER || "NO DEFINIDO");
+  console.log("MAIL_FROM:", process.env.MAIL_FROM || "NO DEFINIDO");
+  console.log("SMTP_PASS existe:", process.env.SMTP_PASS ? "SI" : "NO");
+  console.log("SMTP_PASS longitud sin espacios:", normalizeAppPassword(process.env.SMTP_PASS).length);
+  console.log("=======================================");
+}
+
 function createTransporter() {
-  const host = process.env.SMTP_HOST;
+  const host = String(process.env.SMTP_HOST || "").trim();
   const port = Number(process.env.SMTP_PORT || 587);
-  const secure = String(process.env.SMTP_SECURE || "false") === "true";
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const secure = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
+  const user = String(process.env.SMTP_USER || "").trim();
+  const pass = normalizeAppPassword(process.env.SMTP_PASS);
 
   if (!host || !user || !pass) {
+    console.log("SMTP NO CONFIGURADO COMPLETO.");
+    printSmtpStatus();
     return null;
   }
 
@@ -54,21 +78,77 @@ function createTransporter() {
     host,
     port,
     secure,
-    auth: { user, pass }
+    auth: {
+      user,
+      pass
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    socketTimeout: 30000
   });
-}
-
-function hashPassword(password) {
-  return crypto.createHash("sha256").update(String(password)).digest("hex");
 }
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    service: "SportBook Pro",
+    time: new Date().toISOString(),
+    baseUrl: BASE_URL
+  });
+});
+
+app.get("/api/smtp-check", async (req, res) => {
+  printSmtpStatus();
+
+  const transporter = createTransporter();
+
+  if (!transporter) {
+    return res.status(500).json({
+      ok: false,
+      message: "SMTP incompleto. Revisa variables en Render.",
+      required: ["SMTP_HOST", "SMTP_PORT", "SMTP_SECURE", "SMTP_USER", "SMTP_PASS", "MAIL_FROM"]
+    });
+  }
+
+  try {
+    await transporter.verify();
+    console.log("SMTP VERIFY OK ✅");
+    return res.json({
+      ok: true,
+      message: "SMTP conectado correctamente."
+    });
+  } catch (error) {
+    console.error("SMTP VERIFY ERROR ❌");
+    console.error("code:", error.code);
+    console.error("command:", error.command);
+    console.error("response:", error.response);
+    console.error("responseCode:", error.responseCode);
+    console.error("message:", error.message);
+
+    return res.status(500).json({
+      ok: false,
+      message: "SMTP no pudo conectarse.",
+      code: error.code || null,
+      command: error.command || null,
+      response: error.response || null,
+      responseCode: error.responseCode || null,
+      error: error.message
+    });
+  }
+});
+
 app.post("/api/register", (req, res) => {
   const { nombre, email, password } = req.body || {};
   const cleanEmail = String(email || "").trim().toLowerCase();
+
+  console.log("REGISTRO SOLICITADO:", cleanEmail);
 
   if (!nombre || !isValidEmail(cleanEmail) || !password || String(password).length < 6) {
     return res.status(400).json({ ok: false, message: "Datos de registro inválidos." });
@@ -78,6 +158,7 @@ app.post("/api/register", (req, res) => {
   const exists = users.some(u => u.email === cleanEmail);
 
   if (exists) {
+    console.log("USUARIO YA EXISTE:", cleanEmail);
     return res.json({ ok: true, message: "El usuario ya existe en el servidor." });
   }
 
@@ -90,12 +171,15 @@ app.post("/api/register", (req, res) => {
 
   writeJson(usersFile, users);
 
-  return res.json({ ok: true, message: "Usuario registrado en servidor." });
+  console.log("USUARIO REGISTRADO OK:", cleanEmail);
+  return res.json({ ok: true, message: "Usuario registrado correctamente." });
 });
 
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body || {};
   const cleanEmail = String(email || "").trim().toLowerCase();
+
+  console.log("LOGIN SOLICITADO:", cleanEmail);
 
   if (cleanEmail === "cliente@sportbook.com" && password === "123456") {
     return res.json({ ok: true, nombre: "Cliente demo", email: cleanEmail });
@@ -105,9 +189,11 @@ app.post("/api/login", (req, res) => {
   const user = users.find(u => u.email === cleanEmail && u.passwordHash === hashPassword(password));
 
   if (!user) {
+    console.log("LOGIN FALLIDO:", cleanEmail);
     return res.status(401).json({ ok: false, message: "Correo o contraseña incorrectos." });
   }
 
+  console.log("LOGIN OK:", cleanEmail);
   return res.json({ ok: true, nombre: user.nombre, email: user.email });
 });
 
@@ -115,7 +201,11 @@ app.post("/api/forgot-password", async (req, res) => {
   const { email } = req.body || {};
   const cleanEmail = String(email || "").trim().toLowerCase();
 
+  console.log("========== RECUPERACIÓN SOLICITADA ==========");
+  console.log("Correo solicitado:", cleanEmail);
+
   if (!isValidEmail(cleanEmail)) {
+    console.log("CORREO INVALIDO:", cleanEmail);
     return res.status(400).json({ ok: false, message: "Correo inválido." });
   }
 
@@ -124,7 +214,11 @@ app.post("/api/forgot-password", async (req, res) => {
   const user = users.find(u => u.email === cleanEmail);
 
   if (!user && !isDemo) {
-    return res.status(404).json({ ok: false, message: "No existe una cuenta con ese correo." });
+    console.log("USUARIO NO REGISTRADO:", cleanEmail);
+    return res.status(404).json({
+      ok: false,
+      message: "No existe una cuenta registrada con ese correo."
+    });
   }
 
   const token = crypto.randomBytes(32).toString("hex");
@@ -143,19 +237,30 @@ app.post("/api/forgot-password", async (req, res) => {
 
   writeJson(tokensFile, tokens);
 
+  console.log("Token generado para:", cleanEmail);
+  console.log("Reset link:", resetLink);
+
+  printSmtpStatus();
+
   const transporter = createTransporter();
 
   if (!transporter) {
-    return res.json({
-      ok: true,
-      simulated: true,
-      message: "Enlace generado. Configura SMTP en .env para enviar correos reales.",
+    console.log("NO SE ENVIA CORREO: SMTP INCOMPLETO");
+    return res.status(500).json({
+      ok: false,
+      message: "SMTP incompleto. Revisa variables en Render.",
       resetLink
     });
   }
 
   try {
-    await transporter.sendMail({
+    console.log("Verificando conexión SMTP...");
+    await transporter.verify();
+    console.log("SMTP verificado OK ✅");
+
+    console.log("Enviando correo a:", cleanEmail);
+
+    const info = await transporter.sendMail({
       from: `"SportBook Pro" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`,
       to: cleanEmail,
       subject: "Recuperación de contraseña - SportBook Pro",
@@ -172,19 +277,41 @@ app.post("/api/forgot-password", async (req, res) => {
             </p>
             <p style="color:#cbd5e1;">Este enlace es válido por 15 minutos.</p>
             <p style="color:#cbd5e1;">Si no solicitaste este cambio, ignora este mensaje.</p>
+            <p style="color:#94a3b8;font-size:12px;">También puedes copiar este enlace:</p>
+            <p style="word-break:break-all;color:#94a3b8;font-size:12px;">${resetLink}</p>
           </div>
         </div>
       `,
       text: `Recupera tu contraseña en SportBook Pro: ${resetLink}`
     });
 
-    return res.json({ ok: true, message: "Enlace enviado al correo del usuario." });
+    console.log("CORREO ENVIADO OK ✅");
+    console.log("Message ID:", info.messageId);
+    console.log("Accepted:", info.accepted);
+    console.log("Rejected:", info.rejected);
+
+    return res.json({
+      ok: true,
+      message: "Enlace enviado al correo del usuario.",
+      messageId: info.messageId
+    });
   } catch (error) {
+    console.error("ERROR ENVIANDO CORREO ❌");
+    console.error("code:", error.code);
+    console.error("command:", error.command);
+    console.error("response:", error.response);
+    console.error("responseCode:", error.responseCode);
+    console.error("message:", error.message);
+    console.error("stack:", error.stack);
+
     return res.status(500).json({
       ok: false,
-      message: "No se pudo enviar el correo. Revisa tus datos SMTP.",
-      error: error.message,
-      resetLink
+      message: "No se pudo enviar el correo.",
+      code: error.code || null,
+      command: error.command || null,
+      response: error.response || null,
+      responseCode: error.responseCode || null,
+      error: error.message
     });
   }
 });
@@ -192,6 +319,8 @@ app.post("/api/forgot-password", async (req, res) => {
 app.post("/api/reset-password", (req, res) => {
   const { token, email, password } = req.body || {};
   const cleanEmail = String(email || "").trim().toLowerCase();
+
+  console.log("RESET PASSWORD SOLICITADO:", cleanEmail);
 
   if (!token || !isValidEmail(cleanEmail) || !password || String(password).length < 6) {
     return res.status(400).json({ ok: false, message: "Datos inválidos." });
@@ -201,12 +330,14 @@ app.post("/api/reset-password", (req, res) => {
   const tokenData = tokens.find(t => t.token === token && t.email === cleanEmail);
 
   if (!tokenData) {
+    console.log("TOKEN INVALIDO:", cleanEmail);
     return res.status(400).json({ ok: false, message: "Token inválido." });
   }
 
   if (Date.now() > tokenData.expiresAt) {
     tokens = tokens.filter(t => t.token !== token);
     writeJson(tokensFile, tokens);
+    console.log("TOKEN EXPIRADO:", cleanEmail);
     return res.status(400).json({ ok: false, message: "El enlace expiró." });
   }
 
@@ -225,6 +356,7 @@ app.post("/api/reset-password", (req, res) => {
       updatedAt: new Date().toISOString()
     });
   } else {
+    console.log("USUARIO NO ENCONTRADO AL RESET:", cleanEmail);
     return res.status(404).json({ ok: false, message: "Usuario no encontrado." });
   }
 
@@ -233,10 +365,15 @@ app.post("/api/reset-password", (req, res) => {
   tokens = tokens.filter(t => t.token !== token);
   writeJson(tokensFile, tokens);
 
+  console.log("PASSWORD ACTUALIZADO OK:", cleanEmail);
   return res.json({ ok: true, message: "Contraseña actualizada correctamente." });
 });
 
 app.listen(PORT, () => {
+  console.log("////////////////////////////////////////////////////////");
   console.log(`SportBook Pro ejecutándose en ${BASE_URL}`);
+  console.log(`Puerto detectado: ${PORT}`);
   console.log("Abre el navegador en:", BASE_URL);
+  printSmtpStatus();
+  console.log("////////////////////////////////////////////////////////");
 });
