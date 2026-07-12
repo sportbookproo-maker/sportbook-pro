@@ -1,0 +1,5 @@
+Frontend JS válido: True
+Server JS válido: True
+Música MB: 0.69
+Peso total MB: 2.93
+Archivo más grande: assets/musica_fondo.mp3 - 0.69 MB
