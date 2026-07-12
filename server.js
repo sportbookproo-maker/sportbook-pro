@@ -1,7 +1,6 @@
 
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
@@ -40,55 +39,69 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(email || "").trim().toLowerCase());
 }
 
-function normalizeAppPassword(value) {
-  return String(value || "").replace(/\s+/g, "").trim();
-}
-
 function hashPassword(password) {
   return crypto.createHash("sha256").update(String(password)).digest("hex");
 }
 
-function printSmtpStatus() {
-  console.log("========== SMTP CONFIG CHECK ==========");
-  console.log("BASE_URL:", BASE_URL);
-  console.log("SMTP_HOST:", process.env.SMTP_HOST || "NO DEFINIDO");
-  console.log("SMTP_PORT:", process.env.SMTP_PORT || "NO DEFINIDO");
-  console.log("SMTP_SECURE:", process.env.SMTP_SECURE || "NO DEFINIDO");
-  console.log("SMTP_USER:", process.env.SMTP_USER || "NO DEFINIDO");
-  console.log("MAIL_FROM:", process.env.MAIL_FROM || "NO DEFINIDO");
-  console.log("SMTP_PASS existe:", process.env.SMTP_PASS ? "SI" : "NO");
-  console.log("SMTP_PASS longitud sin espacios:", normalizeAppPassword(process.env.SMTP_PASS).length);
-  console.log("=======================================");
+function brevoConfigured() {
+  return Boolean(process.env.BREVO_API_KEY && process.env.MAIL_FROM);
 }
 
-function createTransporter() {
-  const host = String(process.env.SMTP_HOST || "").trim();
-  const port = Number(process.env.SMTP_PORT || 587);
-  const secure = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
-  const user = String(process.env.SMTP_USER || "").trim();
-  const pass = normalizeAppPassword(process.env.SMTP_PASS);
+function printBrevoStatus() {
+  console.log("========== BREVO CONFIG CHECK ==========");
+  console.log("BASE_URL:", BASE_URL);
+  console.log("BREVO_API_KEY existe:", process.env.BREVO_API_KEY ? "SI" : "NO");
+  console.log("MAIL_FROM:", process.env.MAIL_FROM || "NO DEFINIDO");
+  console.log("MAIL_FROM_NAME:", process.env.MAIL_FROM_NAME || "SportBook Pro");
+  console.log("========================================");
+}
 
-  if (!host || !user || !pass) {
-    console.log("SMTP NO CONFIGURADO COMPLETO.");
-    printSmtpStatus();
-    return null;
+async function sendBrevoEmail({ to, subject, html, text }) {
+  if (!brevoConfigured()) {
+    printBrevoStatus();
+    throw new Error("Brevo no está configurado. Falta BREVO_API_KEY o MAIL_FROM en Render.");
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: {
-      user,
-      pass
+  const payload = {
+    sender: {
+      name: process.env.MAIL_FROM_NAME || "SportBook Pro",
+      email: process.env.MAIL_FROM
     },
-    tls: {
-      rejectUnauthorized: false
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+    textContent: text
+  };
+
+  console.log("Enviando correo con Brevo API a:", to);
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "api-key": process.env.BREVO_API_KEY
     },
-    connectionTimeout: 20000,
-    greetingTimeout: 20000,
-    socketTimeout: 30000
+    body: JSON.stringify(payload)
   });
+
+  const raw = await response.text();
+  let data = {};
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    data = { raw };
+  }
+
+  if (!response.ok) {
+    console.error("ERROR BREVO API ❌");
+    console.error("status:", response.status);
+    console.error("respuesta:", data);
+    throw new Error(data.message || data.code || `Brevo API error ${response.status}`);
+  }
+
+  console.log("CORREO ENVIADO CON BREVO ✅", data);
+  return data;
 }
 
 app.get("/", (req, res) => {
@@ -104,44 +117,22 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.get("/api/smtp-check", async (req, res) => {
-  printSmtpStatus();
+app.get("/api/brevo-check", async (req, res) => {
+  printBrevoStatus();
 
-  const transporter = createTransporter();
-
-  if (!transporter) {
+  if (!brevoConfigured()) {
     return res.status(500).json({
       ok: false,
-      message: "SMTP incompleto. Revisa variables en Render.",
-      required: ["SMTP_HOST", "SMTP_PORT", "SMTP_SECURE", "SMTP_USER", "SMTP_PASS", "MAIL_FROM"]
+      message: "Brevo no está configurado. Falta BREVO_API_KEY o MAIL_FROM en Render."
     });
   }
 
-  try {
-    await transporter.verify();
-    console.log("SMTP VERIFY OK ✅");
-    return res.json({
-      ok: true,
-      message: "SMTP conectado correctamente."
-    });
-  } catch (error) {
-    console.error("SMTP VERIFY ERROR ❌");
-    console.error("code:", error.code);
-    console.error("command:", error.command);
-    console.error("response:", error.response);
-    console.error("responseCode:", error.responseCode);
-    console.error("message:", error.message);
-
-    return res.status(500).json({
-      ok: false,
-      message: "SMTP no pudo conectarse.",
-      code: error.code || null,
-      command: error.command || null,
-      response: error.response || null,
-      responseCode: error.responseCode || null,
-      error: error.message
-    });
-  }
+  return res.json({
+    ok: true,
+    message: "Brevo configurado. API Key y remitente detectados.",
+    mailFrom: process.env.MAIL_FROM,
+    mailFromName: process.env.MAIL_FROM_NAME || "SportBook Pro"
+  });
 });
 
 app.post("/api/register", (req, res) => {
@@ -239,78 +230,50 @@ app.post("/api/forgot-password", async (req, res) => {
 
   console.log("Token generado para:", cleanEmail);
   console.log("Reset link:", resetLink);
-
-  printSmtpStatus();
-
-  const transporter = createTransporter();
-
-  if (!transporter) {
-    console.log("NO SE ENVIA CORREO: SMTP INCOMPLETO");
-    return res.status(500).json({
-      ok: false,
-      message: "SMTP incompleto. Revisa variables en Render.",
-      resetLink
-    });
-  }
+  printBrevoStatus();
 
   try {
-    console.log("Verificando conexión SMTP...");
-    await transporter.verify();
-    console.log("SMTP verificado OK ✅");
+    const html = `
+      <div style="font-family:Arial,sans-serif;background:#05070b;padding:30px;color:#f8fafc;">
+        <div style="max-width:620px;margin:auto;background:#0b1220;border:1px solid #ffd166;border-radius:18px;padding:26px;">
+          <h2 style="color:#ffd166;margin-top:0;">SportBook Pro</h2>
+          <p>Hola, solicitaste recuperar tu contraseña.</p>
+          <p>Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+          <p style="margin:28px 0;">
+            <a href="${resetLink}" style="background:#ffd166;color:#111827;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:bold;">
+              Recuperar contraseña
+            </a>
+          </p>
+          <p style="color:#cbd5e1;">Este enlace es válido por 15 minutos.</p>
+          <p style="color:#cbd5e1;">Si no solicitaste este cambio, ignora este mensaje.</p>
+          <p style="color:#94a3b8;font-size:12px;">También puedes copiar este enlace:</p>
+          <p style="word-break:break-all;color:#94a3b8;font-size:12px;">${resetLink}</p>
+        </div>
+      </div>
+    `;
 
-    console.log("Enviando correo a:", cleanEmail);
+    const text = `Recupera tu contraseña en SportBook Pro: ${resetLink}`;
 
-    const info = await transporter.sendMail({
-      from: `"SportBook Pro" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`,
+    const info = await sendBrevoEmail({
       to: cleanEmail,
       subject: "Recuperación de contraseña - SportBook Pro",
-      html: `
-        <div style="font-family:Arial,sans-serif;background:#05070b;padding:30px;color:#f8fafc;">
-          <div style="max-width:620px;margin:auto;background:#0b1220;border:1px solid #ffd166;border-radius:18px;padding:26px;">
-            <h2 style="color:#ffd166;margin-top:0;">SportBook Pro</h2>
-            <p>Hola, solicitaste recuperar tu contraseña.</p>
-            <p>Haz clic en el siguiente botón para crear una nueva contraseña:</p>
-            <p style="margin:28px 0;">
-              <a href="${resetLink}" style="background:#ffd166;color:#111827;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:bold;">
-                Recuperar contraseña
-              </a>
-            </p>
-            <p style="color:#cbd5e1;">Este enlace es válido por 15 minutos.</p>
-            <p style="color:#cbd5e1;">Si no solicitaste este cambio, ignora este mensaje.</p>
-            <p style="color:#94a3b8;font-size:12px;">También puedes copiar este enlace:</p>
-            <p style="word-break:break-all;color:#94a3b8;font-size:12px;">${resetLink}</p>
-          </div>
-        </div>
-      `,
-      text: `Recupera tu contraseña en SportBook Pro: ${resetLink}`
+      html,
+      text
     });
-
-    console.log("CORREO ENVIADO OK ✅");
-    console.log("Message ID:", info.messageId);
-    console.log("Accepted:", info.accepted);
-    console.log("Rejected:", info.rejected);
 
     return res.json({
       ok: true,
       message: "Enlace enviado al correo del usuario.",
-      messageId: info.messageId
+      brevo: info
     });
   } catch (error) {
-    console.error("ERROR ENVIANDO CORREO ❌");
-    console.error("code:", error.code);
-    console.error("command:", error.command);
-    console.error("response:", error.response);
-    console.error("responseCode:", error.responseCode);
+    console.error("ERROR ENVIANDO CON BREVO ❌");
     console.error("message:", error.message);
     console.error("stack:", error.stack);
 
     return res.status(500).json({
       ok: false,
-      message: "No se pudo enviar el correo.",
-      code: error.code || null,
-      command: error.command || null,
-      response: error.response || null,
-      responseCode: error.responseCode || null,
+      message: "No se pudo enviar el correo con Brevo.",
       error: error.message
     });
   }
@@ -374,6 +337,6 @@ app.listen(PORT, () => {
   console.log(`SportBook Pro ejecutándose en ${BASE_URL}`);
   console.log(`Puerto detectado: ${PORT}`);
   console.log("Abre el navegador en:", BASE_URL);
-  printSmtpStatus();
+  printBrevoStatus();
   console.log("////////////////////////////////////////////////////////");
 });
