@@ -5017,6 +5017,231 @@ textarea {
   }
 }
 
+
+
+/* ======================================================
+   SPORTBOOK PRO - VERSION MOVIL PREMIUM 2026
+   Optimizado para celulares: Android, iPhone, TikTok demo
+   ====================================================== */
+:root{
+  --mobile-gold:#FFD166;
+  --mobile-gold-2:#F5B800;
+  --mobile-bg:#05070d;
+  --mobile-card:rgba(9,14,25,.92);
+}
+.mobile-topbar,
+.mobile-bottom-nav,
+.mobile-overlay{display:none;}
+
+button, a, input, select, textarea{ -webkit-tap-highlight-color: transparent; }
+html{ scroll-behavior:smooth; }
+body{ touch-action:manipulation; }
+
+@media (max-width: 760px){
+  body{ background:#05070d !important; }
+
+  /* Login móvil */
+  .login-screen{
+    min-height:100dvh !important;
+    grid-template-columns:1fr !important;
+    gap:18px !important;
+    padding:18px 14px 28px !important;
+    align-items:start !important;
+    background-position:center !important;
+  }
+  .login-screen::before{filter:blur(8px)!important; opacity:.9!important;}
+  .hero{ text-align:center !important; padding-top:6px !important; }
+  .hero-logo-wrap{display:flex!important; justify-content:center!important; margin-bottom:8px!important;}
+  .hero-logo{max-width:118px!important; height:auto!important; border-radius:22px!important;}
+  .hero-title-image img{width:min(92vw, 360px)!important; height:auto!important; object-fit:contain!important;}
+  .badge{font-size:12px!important; padding:9px 13px!important; margin-bottom:12px!important;}
+  .strip{font-size:15px!important; padding:9px 14px!important; margin-bottom:16px!important;}
+  .hero p{font-size:14px!important; line-height:1.55!important; margin:0 auto 16px!important; max-width:94vw!important;}
+  .feature{max-width:100%!important; margin:9px 0!important; padding:11px 12px!important; border-radius:18px!important; font-size:13px!important; text-align:left!important; gap:10px!important;}
+  .icon-box{width:48px!important; height:48px!important; border-radius:16px!important;}
+  .login-card{padding:20px 16px!important; border-radius:24px!important; width:100%!important; max-width:430px!important; margin:0 auto!important;}
+  .login-card h2{font-size:24px!important;}
+  .login-card p{font-size:13px!important;}
+  label{font-size:13px!important; margin-top:12px!important;}
+  input, select, textarea{font-size:16px!important; padding:14px!important; border-radius:15px!important;}
+  .btn, .btn-full, button.btn{min-height:48px!important; font-size:14px!important; border-radius:16px!important;}
+  .mini-stats{grid-template-columns:repeat(3, 1fr)!important; gap:8px!important; margin-top:16px!important;}
+  .mini{padding:10px 6px!important; font-size:11px!important; border-radius:14px!important;}
+  .mini b{font-size:18px!important;}
+
+  /* App móvil */
+  #app.app,
+  #app.app.app-activa{
+    padding:76px 12px 96px !important;
+    min-height:100dvh !important;
+    overflow-x:hidden !important;
+    background-attachment:scroll !important;
+  }
+
+  .mobile-topbar{
+    position:fixed!important;
+    top:10px!important;
+    left:10px!important;
+    right:10px!important;
+    z-index:9999!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:10px!important;
+    padding:10px 12px!important;
+    border-radius:22px!important;
+    background:rgba(5,7,13,.88)!important;
+    border:1px solid rgba(255,209,102,.25)!important;
+    backdrop-filter:blur(18px)!important;
+    box-shadow:0 14px 40px rgba(0,0,0,.45), 0 0 22px rgba(255,209,102,.10)!important;
+  }
+  .mobile-brand{display:flex!important; align-items:center!important; gap:9px!important; color:#fff!important; font-weight:950!important; letter-spacing:-.02em!important;}
+  .mobile-brand img{width:38px!important; height:38px!important; border-radius:13px!important; object-fit:cover!important; box-shadow:0 0 15px rgba(255,209,102,.18)!important;}
+  .mobile-brand small{display:block!important; font-size:11px!important; color:rgba(255,255,255,.62)!important; font-weight:800!important; margin-top:1px!important;}
+  .mobile-menu-btn{
+    width:44px!important; height:44px!important; border-radius:16px!important;
+    border:1px solid rgba(255,209,102,.30)!important;
+    background:linear-gradient(180deg, rgba(255,209,102,.20), rgba(255,255,255,.06))!important;
+    color:#fff!important; font-size:22px!important; font-weight:900!important;
+    display:grid!important; place-items:center!important;
+  }
+
+  .mobile-overlay{
+    position:fixed!important; inset:0!important; z-index:9997!important;
+    display:block!important; background:rgba(0,0,0,.56)!important;
+    opacity:0!important; pointer-events:none!important; transition:.25s ease!important;
+  }
+  body.mobile-menu-open .mobile-overlay{opacity:1!important; pointer-events:auto!important;}
+
+  .sidebar{
+    position:fixed!important;
+    top:76px!important;
+    left:10px!important;
+    right:10px!important;
+    bottom:auto!important;
+    width:auto!important;
+    max-height:calc(100dvh - 100px)!important;
+    z-index:9998!important;
+    border-radius:26px!important;
+    padding:16px!important;
+    transform:translateY(-14px) scale(.98)!important;
+    opacity:0!important;
+    pointer-events:none!important;
+    transition:.25s ease!important;
+    overflow-y:auto!important;
+    background:rgba(7,9,15,.96)!important;
+  }
+  body.mobile-menu-open .sidebar{transform:translateY(0) scale(1)!important; opacity:1!important; pointer-events:auto!important;}
+  .sidebar .logo{margin-bottom:12px!important;}
+  .sidebar-premium-card{display:none!important;}
+  .nav{display:grid!important; grid-template-columns:1fr 1fr!important; gap:8px!important;}
+  .nav button{min-height:48px!important; padding:10px 9px!important; margin:0!important; border-radius:16px!important; font-size:12px!important; text-align:left!important; background:rgba(255,255,255,.04)!important;}
+  .nav button.active{background:linear-gradient(135deg, rgba(255,209,102,.22), rgba(255,255,255,.05))!important; border-left:3px solid var(--mobile-gold)!important;}
+
+  .content{width:100%!important; margin:0!important; padding:0!important; max-width:none!important;}
+  .topbar{display:block!important; margin-bottom:14px!important;}
+  .search-box{width:100%!important; position:relative!important;}
+  .search-box input{min-height:50px!important; font-size:15px!important; border-radius:18px!important; padding:14px 15px!important;}
+  .user{display:none!important;}
+  .search-results{left:0!important; right:0!important; width:100%!important; max-height:50dvh!important; overflow:auto!important; border-radius:18px!important;}
+
+  .section h2{font-size:clamp(25px, 7vw, 34px)!important; line-height:1.05!important; margin-bottom:12px!important;}
+  .section > .muted{font-size:14px!important; line-height:1.55!important; margin-bottom:16px!important;}
+
+  #inicio .dashboard{
+    min-height:auto!important;
+    padding:24px 18px!important;
+    border-radius:28px!important;
+    display:block!important;
+    text-align:left!important;
+    overflow:hidden!important;
+  }
+  #inicio .dashboard-copy{max-width:100%!important; position:relative!important; z-index:3!important;}
+  #inicio .dashboard .badge{font-size:12px!important; padding:9px 12px!important;}
+  #inicio .dashboard h2{font-size:clamp(34px, 11vw, 48px)!important; line-height:.95!important; margin:16px 0 14px!important;}
+  #inicio .dashboard p{font-size:14px!important; line-height:1.55!important; margin-bottom:18px!important;}
+  #inicio .dashboard .btn{width:100%!important; min-height:52px!important; justify-content:center!important;}
+  #inicio .dashboard-visual{position:relative!important; width:100%!important; min-width:0!important; margin-top:14px!important; opacity:.95!important;}
+  #inicio .dashboard-ball-shell{width:100%!important; height:150px!important; justify-content:center!important;}
+  #inicio .dashboard-ball-shell img{max-width:260px!important; width:80%!important; height:150px!important; object-position:center!important;}
+
+  .stats,
+  .quick-actions-grid,
+  .featured-grid,
+  .grid,
+  .grid-2,
+  .products,
+  .promo-grid,
+  .cards-grid,
+  .payment-grid,
+  .owner-grid,
+  .map-grid,
+  .history-grid,
+  .home-extras{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:13px!important;
+  }
+  .stats{grid-template-columns:repeat(2, minmax(0,1fr))!important;}
+  .stat{min-height:92px!important; padding:15px!important; border-radius:20px!important;}
+  .stat b, #inicio .stat b{font-size:25px!important; word-break:break-word!important;}
+
+  .card, .home-panel, .quick-action-card, .featured-card, .payment-real-box, .owner-payment-box, .map-panel, .availability-box{
+    width:100%!important;
+    min-width:0!important;
+    padding:16px!important;
+    border-radius:22px!important;
+  }
+  .quick-action-card{min-height:112px!important; display:flex!important; align-items:center!important; gap:14px!important; text-align:left!important;}
+  .quick-action-icon{margin:0!important; width:52px!important; height:52px!important; flex:0 0 52px!important;}
+  .quick-action-card h4{font-size:15px!important;}
+  .quick-action-card p{font-size:12px!important;}
+  .card img, .featured-card img, .product-img, .cancha-img{max-height:190px!important; object-fit:cover!important; border-radius:18px!important;}
+
+  .modal-wrap, .modal, .ticket-real, .boleta, .receipt{
+    width:calc(100vw - 24px)!important;
+    max-width:calc(100vw - 24px)!important;
+    max-height:88dvh!important;
+    overflow:auto!important;
+    border-radius:22px!important;
+    padding:16px!important;
+  }
+
+  .mobile-bottom-nav{
+    position:fixed!important;
+    left:10px!important; right:10px!important; bottom:10px!important;
+    z-index:9996!important;
+    display:grid!important;
+    grid-template-columns:repeat(5, 1fr)!important;
+    gap:6px!important;
+    padding:8px!important;
+    border-radius:24px!important;
+    background:rgba(5,7,13,.90)!important;
+    border:1px solid rgba(255,209,102,.23)!important;
+    backdrop-filter:blur(18px)!important;
+    box-shadow:0 -12px 38px rgba(0,0,0,.45), 0 0 22px rgba(255,209,102,.09)!important;
+  }
+  .mobile-bottom-nav button{
+    border:0!important; border-radius:18px!important; min-height:50px!important;
+    background:transparent!important; color:rgba(255,255,255,.78)!important;
+    font-weight:850!important; font-size:10px!important;
+    display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:center!important; gap:2px!important;
+  }
+  .mobile-bottom-nav button span{font-size:18px!important; line-height:1!important;}
+  .mobile-bottom-nav button.active,
+  .mobile-bottom-nav button:active{background:linear-gradient(180deg, rgba(255,209,102,.22), rgba(255,255,255,.05))!important; color:#fff!important;}
+
+  table{display:block!important; width:100%!important; overflow-x:auto!important; white-space:nowrap!important;}
+}
+
+@media (max-width: 390px){
+  .nav{grid-template-columns:1fr!important;}
+  .stats{grid-template-columns:1fr!important;}
+  .mobile-bottom-nav button{font-size:9px!important;}
+  .mobile-bottom-nav button span{font-size:17px!important;}
+  #inicio .dashboard h2{font-size:34px!important;}
+}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -5216,6 +5441,16 @@ textarea {
   </main>
 
   <main id="app" class="app">
+
+    <div class="mobile-topbar" aria-label="Barra móvil SportBook Pro">
+      <div class="mobile-brand">
+        <img src="assets/logo_sportbook_pro_oficial.webp" alt="SportBook Pro">
+        <div>SportBook Pro<small>Versión móvil</small></div>
+      </div>
+      <button type="button" class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Abrir menú">☰</button>
+    </div>
+    <div class="mobile-overlay" onclick="closeMobileMenu()" aria-hidden="true"></div>
+
     <div class="space-nebula" aria-hidden="true"></div>
     <div class="space-glow-rings" aria-hidden="true"></div>
     <div class="space-stars-layer" aria-hidden="true"></div>
@@ -6020,7 +6255,15 @@ textarea {
       </section>
 
 </section>
-  </main>
+  
+    <div class="mobile-bottom-nav" aria-label="Navegación rápida móvil">
+      <button type="button" data-mobile-section="inicio" class="active" onclick="mobileGo('inicio')"><span>🏠</span>Inicio</button>
+      <button type="button" data-mobile-section="reservas" onclick="mobileGo('reservas')"><span>📅</span>Reservar</button>
+      <button type="button" data-mobile-section="canchas" onclick="mobileGo('canchas')"><span>⚽</span>Canchas</button>
+      <button type="button" data-mobile-section="mapa" onclick="mobileGo('mapa')"><span>🗺️</span>Mapa</button>
+      <button type="button" data-mobile-section="pagos" onclick="mobileGo('pagos')"><span>💳</span>Pagos</button>
+    </div>
+</main>
 
   <div id="modal" class="modal-wrap">
     <div class="modal">
@@ -7573,6 +7816,154 @@ textarea {
       }
     }
 
+</script>
+
+
+<script>
+/* FIX DEFINITIVO RECUPERACIÓN DE CONTRASEÑA - RENDER */
+(function () {
+  async function postSportBook(endpoint, data) {
+    const response = await fetch(window.location.origin + endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    let json = {};
+    try {
+      json = await response.json();
+    } catch (e) {}
+
+    if (!response.ok) {
+      throw new Error(json.message || "No se pudo conectar con el servidor");
+    }
+
+    return json;
+  }
+
+  window.enviarEnlaceRecuperacion = async function () {
+    const input = document.getElementById("recoverEmail");
+    const result = document.getElementById("recoverResult");
+    const btn = document.querySelector('button[onclick="enviarEnlaceRecuperacion()"]');
+
+    if (!input) {
+      alert("No se encontró el campo de correo.");
+      return;
+    }
+
+    const email = input.value.trim().toLowerCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      if (typeof toast === "function") {
+        toast("Ingresa un correo válido");
+      } else {
+        alert("Ingresa un correo válido");
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Enviando enlace...";
+    }
+
+    if (result) {
+      result.style.display = "block";
+      result.innerHTML = `
+        <b>Procesando solicitud...</b>
+        <p>Estamos enviando el enlace de recuperación a <strong>${email}</strong>.</p>
+      `;
+    }
+
+    try {
+      const data = await postSportBook("/api/forgot-password", { email });
+
+      if (result) {
+        result.style.display = "block";
+
+        if (data.simulated && data.resetLink) {
+          result.innerHTML = `
+            <b>Servidor activo, pero falta SMTP</b>
+            <p>Se generó el enlace, pero revisa las variables SMTP para que llegue al correo.</p>
+            <div class="recover-actions">
+              <a class="recover-btn" href="${data.resetLink}">Abrir enlace generado</a>
+            </div>
+          `;
+        } else {
+          result.innerHTML = `
+            <b>Enlace enviado correctamente</b>
+            <p>Revisa tu correo <strong>${email}</strong>. También revisa Spam o Promociones.</p>
+            <small>El enlace será válido por 15 minutos.</small>
+          `;
+        }
+      }
+
+      if (typeof toast === "function") {
+        toast("Enlace de recuperación enviado");
+      }
+    } catch (error) {
+      if (result) {
+        result.style.display = "block";
+        result.innerHTML = `
+          <b>No se pudo enviar el enlace</b>
+          <p>${error.message}</p>
+          <small>Verifica que el correo esté registrado y que SMTP esté configurado en Render.</small>
+        `;
+      }
+
+      if (typeof toast === "function") {
+        toast(error.message);
+      } else {
+        alert(error.message);
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Enviar enlace de recuperación";
+      }
+    }
+  };
+})();
+
+
+/* SportBook Pro: funciones móviles */
+function toggleMobileMenu(){
+  document.body.classList.toggle('mobile-menu-open');
+}
+function closeMobileMenu(){
+  document.body.classList.remove('mobile-menu-open');
+}
+function mobileGo(id){
+  const navButton = Array.from(document.querySelectorAll('.nav button')).find(btn => {
+    const code = btn.getAttribute('onclick') || '';
+    return code.includes("'" + id + "'") || code.includes('"' + id + '"');
+  });
+  if (typeof showSection === 'function') {
+    showSection(id, navButton || null);
+  }
+  document.querySelectorAll('.mobile-bottom-nav button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mobileSection === id);
+  });
+  closeMobileMenu();
+}
+document.addEventListener('click', function(ev){
+  const navBtn = ev.target.closest && ev.target.closest('.nav button');
+  if(navBtn){
+    const code = navBtn.getAttribute('onclick') || '';
+    const match = code.match(/showSection\(['\"]([^'\"]+)/);
+    if(match){
+      document.querySelectorAll('.mobile-bottom-nav button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mobileSection === match[1]);
+      });
+    }
+    closeMobileMenu();
+  }
+});
+window.addEventListener('resize', function(){
+  if(window.innerWidth > 760){ closeMobileMenu(); }
+});
 </script>
 
 </body>
